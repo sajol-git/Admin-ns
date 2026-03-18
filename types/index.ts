@@ -1,0 +1,51 @@
+export type ProductStatus = 'published' | 'draft';
+export type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+export type UserRole = 'admin' | 'user' | 'suspect';
+
+export interface Product {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  stock: number;
+  category: string;
+  brand: string;
+  status: ProductStatus;
+  is_featured: boolean;
+  image_url?: string;
+  created_at?: string;
+}
+
+export interface Order {
+  id: string;
+  total: number;
+  status: OrderStatus;
+  customer_name: string;
+  customer_phone: string;
+  customer_address: string;
+  created_at?: string;
+}
+
+export interface OrderItem {
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  price: number;
+  product?: Product;
+}
+
+export interface OrderTrackingHistory {
+  id: string;
+  order_id: string;
+  status: OrderStatus;
+  message: string;
+  created_at: string;
+}
+
+export interface User {
+  id: string;
+  role: UserRole;
+  phone: string;
+  name: string;
+}

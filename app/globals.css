@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #E4E3E0;
+  --color-ink: #141414;
+  --color-line: #141414;
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+  }
+}
+
+.data-row {
+  @apply grid grid-cols-[40px_1.5fr_1fr_1fr] p-4 border-b border-line transition-colors duration-200 cursor-pointer;
+}
+
+.data-row:hover {
+  @apply bg-ink text-bg;
+}
+
+.col-header {
+  font-family: 'Georgia', serif;
+  @apply italic text-[11px] opacity-50 uppercase tracking-wider;
+}
+
+.data-value {
+  @apply font-mono tracking-tight;
+}

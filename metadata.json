@@ -1,0 +1,5 @@
+{
+  "name": "NeedieAdmin",
+  "description": "A standalone administrative suite for the NeedieShop e-commerce ecosystem.",
+  "requestFramePermissions": []
+}
