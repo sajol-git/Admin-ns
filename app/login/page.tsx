@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [statusText, setStatusText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -17,8 +18,19 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setStatusText('Checking configuration...');
+
+    // Check if Supabase URL is configured
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co' || supabaseUrl.includes('placeholder')) {
+      setError('Supabase credentials are not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in the AI Studio Secrets panel (gear icon top right).');
+      setLoading(false);
+      setStatusText('');
+      return;
+    }
 
     try {
+      setStatusText('Authenticating with Supabase...');
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -26,6 +38,7 @@ export default function LoginPage() {
 
       if (signInError) throw signInError;
 
+      setStatusText('Checking admin privileges...');
       // Check if user is admin or owner
       const isOwner = data.user.email === 'sajol.professional@gmail.com' || data.user.email === 'sadikulislamsajol@gmail.com';
       
@@ -38,6 +51,7 @@ export default function LoginPage() {
       const profile = profiles?.[0];
 
       if (profile?.role === 'admin' || isOwner) {
+        setStatusText('Setting up admin profile...');
         // If the owner doesn't have an admin profile yet, we can try to create one
         if (isOwner && profile?.role !== 'admin') {
           try {
@@ -53,9 +67,11 @@ export default function LoginPage() {
           }
         }
         
+        setStatusText('Verifying session...');
         // Verify session is established before redirecting
         const { data: sessionData } = await supabase.auth.getSession();
         
+        setStatusText('Redirecting to dashboard...');
         if (sessionData.session) {
           // Use replace to prevent going back to login page
           window.location.replace('/admin');
@@ -68,6 +84,7 @@ export default function LoginPage() {
       } else {
         await supabase.auth.signOut();
         setError('Unauthorized: Admin access required.');
+        setStatusText('');
       }
     } catch (err: any) {
       let errorMessage = err.message || 'An error occurred during login.';
@@ -75,6 +92,7 @@ export default function LoginPage() {
         errorMessage = 'Failed to connect to the database. Please ensure your Supabase URL and Anon Key are correctly configured in the AI Studio Secrets panel.';
       }
       setError(errorMessage);
+      setStatusText('');
     } finally {
       setLoading(false);
     }
@@ -130,7 +148,7 @@ export default function LoginPage() {
             className="w-full bg-ink text-bg p-4 font-mono font-bold uppercase tracking-widest hover:bg-opacity-90 transition-colors flex items-center justify-center disabled:opacity-50"
           >
             {loading ? <Loader2 className="animate-spin mr-2" /> : null}
-            {loading ? 'Authenticating...' : 'Initialize Session'}
+            {loading ? (statusText || 'Authenticating...') : 'Initialize Session'}
           </button>
         </form>
       </div>
