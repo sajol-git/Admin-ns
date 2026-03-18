@@ -4,10 +4,19 @@ import ProductsClient from './ProductsClient';
 export default async function ProductsPage() {
   const supabase = await createClient();
   let products: any[] = [];
+  let categories: any[] = [];
+  let brands: any[] = [];
   
   try {
-    const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    products = data || [];
+    const [productsRes, categoriesRes, brandsRes] = await Promise.all([
+      supabase.from('products').select('*').order('created_at', { ascending: false }),
+      supabase.from('categories').select('*').order('name', { ascending: true }),
+      supabase.from('brands').select('*').order('name', { ascending: true })
+    ]);
+
+    products = productsRes.data || [];
+    categories = categoriesRes.data || [];
+    brands = brandsRes.data || [];
   } catch (error) {
     console.error('Supabase fetch error:', error);
   }
@@ -21,7 +30,11 @@ export default async function ProductsPage() {
         </div>
       </div>
 
-      <ProductsClient initialProducts={products} />
+      <ProductsClient 
+        initialProducts={products} 
+        categories={categories}
+        brands={brands}
+      />
     </div>
   );
 }

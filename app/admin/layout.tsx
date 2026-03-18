@@ -9,7 +9,9 @@ import {
   Users, 
   Settings, 
   LogOut,
-  Menu
+  Menu,
+  Tags,
+  Bookmark
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { createClient } from '@/utils/supabase/client';
@@ -18,6 +20,8 @@ import { useRouter } from 'next/navigation';
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Products', href: '/admin/products', icon: Package },
+  { name: 'Categories', href: '/admin/categories', icon: Tags },
+  { name: 'Brands', href: '/admin/brands', icon: Bookmark },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Customers', href: '/admin/customers', icon: Users },
   { name: 'Settings', href: '/admin/settings', icon: Settings },

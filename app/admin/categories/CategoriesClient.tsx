@@ -1,0 +1,251 @@
+'use client';
+
+import { useState } from 'react';
+import { Plus, Trash2, Edit2, X, Check, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { createClient } from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  created_at: string;
+}
+
+export default function CategoriesClient({ initialCategories }: { initialCategories: Category[] }) {
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({ name: '', slug: '' });
+  
+  const supabase = createClient();
+  const router = useRouter();
+
+  const handleOpenModal = (category?: Category) => {
+    if (category) {
+      setEditingCategory(category);
+      setFormData({ name: category.name, slug: category.slug });
+    } else {
+      setEditingCategory(null);
+      setFormData({ name: '', slug: '' });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingCategory(null);
+    setFormData({ name: '', slug: '' });
+  };
+
+  const generateSlug = (name: string) => {
+    return name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    setFormData({ ...formData, name, slug: generateSlug(name) });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (editingCategory) {
+        const { error } = await supabase
+          .from('categories')
+          .update(formData)
+          .eq('id', editingCategory.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('categories')
+          .insert([formData]);
+        if (error) throw error;
+      }
+
+      // Refresh data
+      const { data } = await supabase
+        .from('categories')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (data) setCategories(data);
+      handleCloseModal();
+      router.refresh();
+    } catch (error) {
+      console.error('Error saving category:', error);
+      alert('Error saving category. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this category?')) return;
+    
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+
+      setCategories(categories.filter(c => c.id !== id));
+      router.refresh();
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      alert('Error deleting category. It might be in use.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-mono text-3xl font-bold uppercase tracking-tighter">Categories</h1>
+          <p className="font-mono text-sm text-ink/60">Manage product categories</p>
+        </div>
+        <button
+          onClick={() => handleOpenModal()}
+          className="flex items-center gap-2 bg-ink px-4 py-2 font-mono text-sm font-bold uppercase tracking-wider text-bg hover:bg-ink/90 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          Add Category
+        </button>
+      </div>
+
+      <div className="border border-line bg-bg">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left font-mono text-sm">
+            <thead>
+              <tr className="border-b border-line bg-line/5 uppercase tracking-wider">
+                <th className="p-4 font-bold">Name</th>
+                <th className="p-4 font-bold">Slug</th>
+                <th className="p-4 font-bold">Created At</th>
+                <th className="p-4 text-right font-bold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {categories.map((category) => (
+                <tr key={category.id} className="border-b border-line hover:bg-line/5 transition-colors">
+                  <td className="p-4 font-bold">{category.name}</td>
+                  <td className="p-4 text-ink/60">{category.slug}</td>
+                  <td className="p-4 text-ink/60">
+                    {new Date(category.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="p-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => handleOpenModal(category)}
+                        className="p-2 hover:bg-line/10 transition-colors"
+                        title="Edit"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(category.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {categories.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="p-8 text-center text-ink/40">
+                    No categories found. Create your first one.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleCloseModal}
+              className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md border border-line bg-bg p-6 shadow-2xl"
+            >
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="font-mono text-xl font-bold uppercase tracking-tight">
+                  {editingCategory ? 'Edit Category' : 'New Category'}
+                </h2>
+                <button onClick={handleCloseModal} className="p-1 hover:bg-line/10">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-ink/60">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={handleNameChange}
+                    className="w-full border border-line bg-bg p-2 font-mono text-sm focus:border-ink focus:outline-none"
+                    placeholder="e.g. Electronics"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-ink/60">
+                    Slug
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.slug}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    className="w-full border border-line bg-bg p-2 font-mono text-sm focus:border-ink focus:outline-none"
+                    placeholder="e.g. electronics"
+                  />
+                </div>
+
+                <div className="pt-4">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="flex w-full items-center justify-center gap-2 bg-ink p-3 font-mono text-sm font-bold uppercase tracking-widest text-bg hover:bg-ink/90 disabled:opacity-50"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="h-4 w-4" />
+                    )}
+                    {editingCategory ? 'Update Category' : 'Create Category'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
