@@ -7,7 +7,10 @@ export interface Product {
   name: string;
   slug: string;
   description: string;
+  metaTitle?: string;
+  metaDescription?: string;
   price: number;
+  compareAtPrice?: number;
   stock: number;
   category: string;
   brand: string;
@@ -15,6 +18,11 @@ export interface Product {
   is_featured: boolean;
   isFlashSale?: boolean;
   image_url?: string | null;
+  featureImage?: string;
+  gallery?: string[];
+  variants?: any[];
+  specifications?: any[];
+  relatedProducts?: any[];
   created_at?: string;
 }
 

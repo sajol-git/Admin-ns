@@ -27,7 +27,10 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-hook-form": "^7.71.2",
+    "react-quill": "^2.0.0",
     "recharts": "^3.8.0",
+    "slugify": "^1.6.8",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"

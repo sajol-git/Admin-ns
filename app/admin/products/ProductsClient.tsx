@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { Product, Category, Brand } from '@/types';
 import Image from 'next/image';
@@ -231,13 +232,13 @@ export default function ProductsClient({
             </button>
           </div>
         </div>
-        <button
-          onClick={() => openModal()}
+        <Link
+          href="/admin/products/add"
           className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-[0.98]"
         >
           <Plus className="h-5 w-5" />
           Add New Product
-        </button>
+        </Link>
       </div>
 
       {viewMode === 'table' ? (
