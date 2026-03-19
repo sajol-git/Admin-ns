@@ -68,17 +68,18 @@ export default function BrandsClient({ initialBrands }: { initialBrands: Brand[]
       }
 
       // Refresh data
-      const { data } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('brands')
         .select('*')
         .order('created_at', { ascending: false });
       
+      if (fetchError) throw fetchError;
       if (data) setBrands(data);
       handleCloseModal();
       router.refresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving brand:', error);
-      alert('Error saving brand. Please try again.');
+      alert(`Error saving brand: ${error.message || 'Please try again.'}`);
     } finally {
       setIsLoading(false);
     }

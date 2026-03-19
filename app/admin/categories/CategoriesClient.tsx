@@ -68,17 +68,18 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
       }
 
       // Refresh data
-      const { data } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('categories')
         .select('*')
         .order('created_at', { ascending: false });
       
+      if (fetchError) throw fetchError;
       if (data) setCategories(data);
       handleCloseModal();
       router.refresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving category:', error);
-      alert('Error saving category. Please try again.');
+      alert(`Error saving category: ${error.message || 'Please try again.'}`);
     } finally {
       setIsLoading(false);
     }
