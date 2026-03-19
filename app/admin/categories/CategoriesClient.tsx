@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Plus, Trash2, Edit2, X, Check, Loader2, Image as ImageIcon } from 'lucide-react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -138,11 +139,15 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
                 <tr key={category.id} className="border-b border-line hover:bg-line/5 transition-colors">
                   <td className="p-4">
                     {category.image_url ? (
-                      <img 
-                        src={category.image_url} 
-                        alt={category.name} 
-                        className="h-10 w-10 object-contain border border-line bg-white"
-                      />
+                      <div className="relative h-10 w-10 border border-line bg-white overflow-hidden">
+                        <Image 
+                          src={category.image_url} 
+                          alt={category.name} 
+                          fill
+                          className="object-contain"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
                     ) : (
                       <div className="flex h-10 w-10 items-center justify-center border border-line bg-line/5">
                         <ImageIcon className="h-4 w-4 opacity-20" />

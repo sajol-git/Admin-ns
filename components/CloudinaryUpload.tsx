@@ -1,7 +1,9 @@
 'use client';
 
-import { CldUploadWidget } from 'next-cloudinary';
-import { Image as ImageIcon, Upload, X } from 'lucide-react';
+import { useState } from 'react';
+import { Upload, X, Image as ImageIcon, Loader2, Library } from 'lucide-react';
+import Image from 'next/image';
+import MediaLibrary from './MediaLibrary';
 
 interface CloudinaryUploadProps {
   value: string;
@@ -10,15 +12,8 @@ interface CloudinaryUploadProps {
   label?: string;
 }
 
-export default function CloudinaryUpload({
-  value,
-  onChange,
-  onRemove,
-  label = "Image"
-}: CloudinaryUploadProps) {
-  const onUpload = (result: any) => {
-    onChange(result.info.secure_url);
-  };
+export default function CloudinaryUpload({ value, onChange, onRemove, label = "Image" }: CloudinaryUploadProps) {
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
   return (
     <div className="space-y-2">
@@ -29,11 +24,15 @@ export default function CloudinaryUpload({
       <div className="flex flex-wrap gap-4">
         {value ? (
           <div className="relative h-40 w-40 border border-line bg-white p-2 shadow-[4px_4px_0px_0px_rgba(20,20,20,1)]">
-            <img
-              src={value}
-              alt="Upload"
-              className="h-full w-full object-contain"
-            />
+            <div className="relative h-full w-full overflow-hidden">
+              <Image
+                src={value}
+                alt="Upload"
+                fill
+                className="object-contain"
+                referrerPolicy="no-referrer"
+              />
+            </div>
             <button
               onClick={onRemove}
               type="button"
@@ -41,63 +40,34 @@ export default function CloudinaryUpload({
             >
               <X className="h-4 w-4" />
             </button>
+            <button
+              onClick={() => setIsLibraryOpen(true)}
+              type="button"
+              className="absolute -bottom-2 -right-2 border border-line bg-ink p-1 text-bg shadow-[2px_2px_0px_0px_rgba(20,20,20,1)] hover:bg-ink/90 transition-colors"
+              title="Change Image"
+            >
+              <Library className="h-4 w-4" />
+            </button>
           </div>
         ) : (
-          <CldUploadWidget
-            onSuccess={onUpload}
-            uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-            options={{
-              maxFiles: 1,
-              folder: 'needieshop',
-              sources: ['local'],
-              clientAllowedFormats: ['png', 'jpeg', 'jpg', 'webp'],
-              styles: {
-                palette: {
-                  window: "#FFFFFF",
-                  windowBorder: "#141414",
-                  tabIcon: "#141414",
-                  menuIcons: "#141414",
-                  textDark: "#141414",
-                  textLight: "#FFFFFF",
-                  link: "#141414",
-                  action: "#141414",
-                  inactiveTabIcon: "#141414",
-                  error: "#F44336",
-                  inProgress: "#141414",
-                  complete: "#141414",
-                  sourceBg: "#FFFFFF"
-                },
-                fonts: {
-                  default: null,
-                  "'Courier New', Courier, monospace": {
-                    url: null,
-                    active: true
-                  }
-                }
-              }
-            }}
+          <button
+            type="button"
+            onClick={() => setIsLibraryOpen(true)}
+            className="flex h-40 w-40 flex-col items-center justify-center gap-2 border border-dashed border-line bg-line/5 transition-colors hover:bg-line/10 group"
           >
-            {({ open }) => {
-              const onClick = () => {
-                open();
-              };
-
-              return (
-                <button
-                  type="button"
-                  onClick={onClick}
-                  className="flex h-40 w-40 flex-col items-center justify-center gap-2 border border-dashed border-line bg-line/5 transition-colors hover:bg-line/10"
-                >
-                  <Upload className="h-6 w-6 opacity-40" />
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest opacity-40">
-                    Upload Image
-                  </span>
-                </button>
-              );
-            }}
-          </CldUploadWidget>
+            <Library className="h-6 w-6 opacity-40 group-hover:opacity-100 transition-opacity" />
+            <span className="font-mono text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">
+              Media Library
+            </span>
+          </button>
         )}
       </div>
+
+      <MediaLibrary
+        isOpen={isLibraryOpen}
+        onClose={() => setIsLibraryOpen(false)}
+        onSelect={onChange}
+      />
     </div>
   );
 }

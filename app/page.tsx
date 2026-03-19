@@ -57,10 +57,12 @@ export default async function Home() {
               <Link href={`/product/${product.slug}`} key={product.id} className="group block border border-line bg-white shadow-[8px_8px_0px_0px_rgba(20,20,20,1)] hover:translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(20,20,20,1)] transition-all">
                 <div className="aspect-square bg-zinc-100 relative border-b border-line overflow-hidden">
                   {product.image_url ? (
-                    <img 
+                    <Image 
                       src={product.image_url} 
                       alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      referrerPolicy="no-referrer"
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-zinc-400">No Image</div>

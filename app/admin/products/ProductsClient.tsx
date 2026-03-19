@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Product, Category, Brand } from '@/types';
+import Image from 'next/image';
 import CloudinaryUpload from '@/components/CloudinaryUpload';
 import { 
   Plus, 
@@ -288,10 +289,12 @@ export default function ProductsClient({
               >
                 <div className="relative aspect-square bg-line/5 border-b border-line overflow-hidden">
                   {product.image_url ? (
-                    <img 
+                    <Image 
                       src={product.image_url} 
                       alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      referrerPolicy="no-referrer"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center opacity-20">
@@ -522,12 +525,14 @@ export default function ProductsClient({
               ) : (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="aspect-square border-4 border-ink bg-line/5 overflow-hidden shadow-[8px_8px_0px_0px_rgba(20,20,20,1)]">
+                    <div className="relative aspect-square border-4 border-ink bg-line/5 overflow-hidden shadow-[8px_8px_0px_0px_rgba(20,20,20,1)]">
                       {watch('image_url') ? (
-                        <img 
+                        <Image 
                           src={watch('image_url') || ''} 
                           alt="Preview" 
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          referrerPolicy="no-referrer"
                         />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center opacity-20">
