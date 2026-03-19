@@ -1,24 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, Edit2, X, Check, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Check, Loader2, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  created_at: string;
-}
+import { Category } from '@/types';
+import CloudinaryUpload from '@/components/CloudinaryUpload';
 
 export default function CategoriesClient({ initialCategories }: { initialCategories: Category[] }) {
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({ name: '', slug: '' });
+  const [formData, setFormData] = useState({ name: '', slug: '', image_url: '' });
   
   const supabase = createClient();
   const router = useRouter();
@@ -26,10 +21,14 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
   const handleOpenModal = (category?: Category) => {
     if (category) {
       setEditingCategory(category);
-      setFormData({ name: category.name, slug: category.slug });
+      setFormData({ 
+        name: category.name, 
+        slug: category.slug, 
+        image_url: category.image_url || '' 
+      });
     } else {
       setEditingCategory(null);
-      setFormData({ name: '', slug: '' });
+      setFormData({ name: '', slug: '', image_url: '' });
     }
     setIsModalOpen(true);
   };
@@ -37,7 +36,7 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingCategory(null);
-    setFormData({ name: '', slug: '' });
+    setFormData({ name: '', slug: '', image_url: '' });
   };
 
   const generateSlug = (name: string) => {
@@ -127,6 +126,7 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
           <table className="w-full border-collapse text-left font-mono text-sm">
             <thead>
               <tr className="border-b border-line bg-line/5 uppercase tracking-wider">
+                <th className="p-4 font-bold">Logo</th>
                 <th className="p-4 font-bold">Name</th>
                 <th className="p-4 font-bold">Slug</th>
                 <th className="p-4 font-bold">Created At</th>
@@ -136,10 +136,23 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
             <tbody>
               {categories.map((category) => (
                 <tr key={category.id} className="border-b border-line hover:bg-line/5 transition-colors">
+                  <td className="p-4">
+                    {category.image_url ? (
+                      <img 
+                        src={category.image_url} 
+                        alt={category.name} 
+                        className="h-10 w-10 object-contain border border-line bg-white"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center border border-line bg-line/5">
+                        <ImageIcon className="h-4 w-4 opacity-20" />
+                      </div>
+                    )}
+                  </td>
                   <td className="p-4 font-bold">{category.name}</td>
                   <td className="p-4 text-ink/60">{category.slug}</td>
                   <td className="p-4 text-ink/60">
-                    {new Date(category.created_at).toLocaleDateString()}
+                    {category.created_at ? new Date(category.created_at).toLocaleDateString() : 'N/A'}
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end gap-2">
@@ -163,7 +176,7 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
               ))}
               {categories.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-ink/40">
+                  <td colSpan={5} className="p-8 text-center text-ink/40">
                     No categories found. Create your first one.
                   </td>
                 </tr>
@@ -225,6 +238,15 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                     className="w-full border border-line bg-bg p-2 font-mono text-sm focus:border-ink focus:outline-none"
                     placeholder="e.g. electronics"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <CloudinaryUpload
+                    label="Category Logo"
+                    value={formData.image_url}
+                    onChange={(url) => setFormData({ ...formData, image_url: url })}
+                    onRemove={() => setFormData({ ...formData, image_url: '' })}
                   />
                 </div>
 

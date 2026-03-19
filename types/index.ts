@@ -49,3 +49,19 @@ export interface User {
   phone: string;
   name: string;
 }
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  image_url?: string | null;
+  created_at?: string;
+}
+
+export interface Brand {
+  id: string;
+  name: string;
+  slug: string;
+  image_url?: string | null;
+  created_at?: string;
+}

@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS public.categories (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
   slug TEXT NOT NULL UNIQUE,
+  image_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -11,6 +12,7 @@ CREATE TABLE IF NOT EXISTS public.brands (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
   slug TEXT NOT NULL UNIQUE,
+  image_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -19,8 +21,11 @@ ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.brands ENABLE ROW LEVEL SECURITY;
 
 -- Create policies
-CREATE POLICY "Allow authenticated full access to categories" ON public.categories FOR ALL TO authenticated USING (true);
-CREATE POLICY "Allow authenticated full access to brands" ON public.brands FOR ALL TO authenticated USING (true);
+DROP POLICY IF EXISTS "Allow authenticated full access to categories" ON public.categories;
+CREATE POLICY "Allow authenticated full access to categories" ON public.categories FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow authenticated full access to brands" ON public.brands;
+CREATE POLICY "Allow authenticated full access to brands" ON public.brands FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Create profiles table
 CREATE TABLE IF NOT EXISTS public.profiles (
@@ -117,3 +122,5 @@ CREATE TRIGGER on_auth_user_created
 
 -- Enable real-time for orders table
 ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.categories;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.brands;

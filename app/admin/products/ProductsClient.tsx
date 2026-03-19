@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Product } from '@/types';
+import { Product, Category, Brand } from '@/types';
+import CloudinaryUpload from '@/components/CloudinaryUpload';
 import { 
   Plus, 
   Search, 
@@ -35,18 +36,6 @@ const productSchema = z.object({
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
-
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-interface Brand {
-  id: string;
-  name: string;
-  slug: string;
-}
 
 export default function ProductsClient({ 
   initialProducts,
@@ -481,11 +470,11 @@ export default function ProductsClient({
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block font-mono text-xs font-bold uppercase">Image URL</label>
-                    <input
-                      {...register('image_url')}
-                      placeholder="https://example.com/image.jpg"
-                      className="w-full border-2 border-ink p-2 font-mono focus:bg-yellow-50 outline-none"
+                    <CloudinaryUpload
+                      label="Product Image"
+                      value={watch('image_url') || ''}
+                      onChange={(url) => setValue('image_url', url)}
+                      onRemove={() => setValue('image_url', null)}
                     />
                   </div>
 

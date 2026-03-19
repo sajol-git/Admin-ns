@@ -1,24 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, Edit2, X, Check, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Check, Loader2, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-
-interface Brand {
-  id: string;
-  name: string;
-  slug: string;
-  created_at: string;
-}
+import { Brand } from '@/types';
+import CloudinaryUpload from '@/components/CloudinaryUpload';
 
 export default function BrandsClient({ initialBrands }: { initialBrands: Brand[] }) {
   const [brands, setBrands] = useState<Brand[]>(initialBrands);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({ name: '', slug: '' });
+  const [formData, setFormData] = useState({ name: '', slug: '', image_url: '' });
   
   const supabase = createClient();
   const router = useRouter();
@@ -26,10 +21,14 @@ export default function BrandsClient({ initialBrands }: { initialBrands: Brand[]
   const handleOpenModal = (brand?: Brand) => {
     if (brand) {
       setEditingBrand(brand);
-      setFormData({ name: brand.name, slug: brand.slug });
+      setFormData({ 
+        name: brand.name, 
+        slug: brand.slug, 
+        image_url: brand.image_url || '' 
+      });
     } else {
       setEditingBrand(null);
-      setFormData({ name: '', slug: '' });
+      setFormData({ name: '', slug: '', image_url: '' });
     }
     setIsModalOpen(true);
   };
@@ -37,7 +36,7 @@ export default function BrandsClient({ initialBrands }: { initialBrands: Brand[]
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingBrand(null);
-    setFormData({ name: '', slug: '' });
+    setFormData({ name: '', slug: '', image_url: '' });
   };
 
   const generateSlug = (name: string) => {
@@ -127,6 +126,7 @@ export default function BrandsClient({ initialBrands }: { initialBrands: Brand[]
           <table className="w-full border-collapse text-left font-mono text-sm">
             <thead>
               <tr className="border-b border-line bg-line/5 uppercase tracking-wider">
+                <th className="p-4 font-bold">Logo</th>
                 <th className="p-4 font-bold">Name</th>
                 <th className="p-4 font-bold">Slug</th>
                 <th className="p-4 font-bold">Created At</th>
@@ -136,10 +136,23 @@ export default function BrandsClient({ initialBrands }: { initialBrands: Brand[]
             <tbody>
               {brands.map((brand) => (
                 <tr key={brand.id} className="border-b border-line hover:bg-line/5 transition-colors">
+                  <td className="p-4">
+                    {brand.image_url ? (
+                      <img 
+                        src={brand.image_url} 
+                        alt={brand.name} 
+                        className="h-10 w-10 object-contain border border-line bg-white"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center border border-line bg-line/5">
+                        <ImageIcon className="h-4 w-4 opacity-20" />
+                      </div>
+                    )}
+                  </td>
                   <td className="p-4 font-bold">{brand.name}</td>
                   <td className="p-4 text-ink/60">{brand.slug}</td>
                   <td className="p-4 text-ink/60">
-                    {new Date(brand.created_at).toLocaleDateString()}
+                    {brand.created_at ? new Date(brand.created_at).toLocaleDateString() : 'N/A'}
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end gap-2">
@@ -163,7 +176,7 @@ export default function BrandsClient({ initialBrands }: { initialBrands: Brand[]
               ))}
               {brands.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-ink/40">
+                  <td colSpan={5} className="p-8 text-center text-ink/40">
                     No brands found. Create your first one.
                   </td>
                 </tr>
@@ -225,6 +238,15 @@ export default function BrandsClient({ initialBrands }: { initialBrands: Brand[]
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                     className="w-full border border-line bg-bg p-2 font-mono text-sm focus:border-ink focus:outline-none"
                     placeholder="e.g. nike"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <CloudinaryUpload
+                    label="Brand Logo"
+                    value={formData.image_url}
+                    onChange={(url) => setFormData({ ...formData, image_url: url })}
+                    onRemove={() => setFormData({ ...formData, image_url: '' })}
                   />
                 </div>
 
