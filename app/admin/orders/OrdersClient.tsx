@@ -19,7 +19,7 @@ export default function OrdersClient({ initialOrders }: { initialOrders: Order[]
     // Real-time updates for orders
     const orderSubscription = supabase
       .channel('public:orders')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload: any) => {
         if (payload.eventType === 'INSERT') {
           setOrders(prev => [payload.new as Order, ...prev]);
         } else if (payload.eventType === 'UPDATE') {

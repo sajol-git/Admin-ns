@@ -33,7 +33,7 @@ export default function DashboardClient({ initialStats, chartData, recentActivit
     // Real-time subscriptions
     const orderSubscription = supabase
       .channel('public:orders')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload: any) => {
         console.log('Order change received!', payload);
         // In a real app, you'd fetch updated stats or calculate them here
         // For now, we just add a mock activity log
