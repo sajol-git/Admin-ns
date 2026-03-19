@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { User, UserRole } from '@/types';
-import { Search, Shield, ShieldAlert, User as UserIcon, Loader2 } from 'lucide-react';
+import { Search, Shield, ShieldAlert, User as UserIcon, Loader2, Plus, X } from 'lucide-react';
+import { createCustomerProfile } from '@/app/actions/admin';
 
 interface CustomerStats extends User {
   totalSpend: number;
@@ -25,6 +26,13 @@ export default function CustomersClient({ initialCustomers }: { initialCustomers
   const [editingCustomer, setEditingCustomer] = useState<CustomerStats | null>(null);
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
+
+  // Create Customer State
+  const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
+  const [isSubmittingCustomer, setIsSubmittingCustomer] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerEmail, setNewCustomerEmail] = useState('');
 
   const handleEditClick = (customer: CustomerStats) => {
     setEditingCustomer(customer);
@@ -74,17 +82,61 @@ export default function CustomersClient({ initialCustomers }: { initialCustomers
     }
   };
 
+  const handleCreateCustomer = async () => {
+    if (!newCustomerName || !newCustomerEmail) {
+      alert('Name and Email are required.');
+      return;
+    }
+
+    setIsSubmittingCustomer(true);
+    const result = await createCustomerProfile({
+      name: newCustomerName,
+      phone: newCustomerPhone,
+      email: newCustomerEmail
+    });
+    setIsSubmittingCustomer(false);
+
+    if (result.error) {
+      alert(result.error);
+    } else if (result.user) {
+      // Add to local state
+      const newCustomer: CustomerStats = {
+        id: result.user.id,
+        name: newCustomerName,
+        phone: newCustomerPhone,
+        role: 'user',
+        totalSpend: 0,
+        orderCount: 0,
+        lastOrderDate: null
+      };
+      setCustomers([newCustomer, ...customers]);
+      setIsCreatingCustomer(false);
+      setNewCustomerName('');
+      setNewCustomerPhone('');
+      setNewCustomerEmail('');
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="relative w-full sm:w-96">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50" />
-        <input
-          type="text"
-          placeholder="Search by name or phone..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full border border-line bg-bg pl-10 pr-4 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ink"
-        />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="relative w-full sm:w-96">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50" />
+          <input
+            type="text"
+            placeholder="Search by name or phone..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full border border-line bg-bg pl-10 pr-4 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ink"
+          />
+        </div>
+        <button 
+          onClick={() => setIsCreatingCustomer(true)}
+          className="flex items-center gap-2 bg-ink text-bg px-4 py-2 font-mono text-sm uppercase tracking-wider hover:bg-opacity-90 transition-colors shrink-0"
+        >
+          <Plus className="h-4 w-4" />
+          Create Customer
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -221,6 +273,66 @@ export default function CustomersClient({ initialCustomers }: { initialCustomers
                 >
                   {isUpdating === editingCustomer.id ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Customer Modal */}
+      {isCreatingCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md border border-line bg-bg shadow-[8px_8px_0px_0px_rgba(20,20,20,1)] p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-mono font-bold tracking-tighter">CREATE_CUSTOMER</h2>
+              <button onClick={() => setIsCreatingCustomer(false)} className="p-2 hover:bg-line/10 transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="col-header block">Name *</label>
+                <input 
+                  type="text" 
+                  value={newCustomerName} 
+                  onChange={(e) => setNewCustomerName(e.target.value)}
+                  className="w-full border border-line bg-transparent p-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ink" 
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="col-header block">Email * (Required for login)</label>
+                <input 
+                  type="email" 
+                  value={newCustomerEmail} 
+                  onChange={(e) => setNewCustomerEmail(e.target.value)}
+                  className="w-full border border-line bg-transparent p-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ink" 
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="col-header block">Phone</label>
+                <input 
+                  type="text" 
+                  value={newCustomerPhone} 
+                  onChange={(e) => setNewCustomerPhone(e.target.value)}
+                  className="w-full border border-line bg-transparent p-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ink" 
+                />
+              </div>
+
+              <div className="flex justify-end gap-4 pt-4 border-t border-line">
+                <button onClick={() => setIsCreatingCustomer(false)} className="px-4 py-2 font-mono text-sm uppercase tracking-wider hover:bg-line/10 transition-colors">
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleCreateCustomer}
+                  disabled={isSubmittingCustomer || !newCustomerName || !newCustomerEmail}
+                  className="flex items-center gap-2 bg-ink text-bg px-6 py-2 font-mono text-sm uppercase tracking-wider hover:bg-opacity-90 transition-colors disabled:opacity-50"
+                >
+                  {isSubmittingCustomer ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Create Profile
                 </button>
               </div>
             </div>

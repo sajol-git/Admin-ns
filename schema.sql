@@ -23,9 +23,13 @@ ALTER TABLE public.brands ENABLE ROW LEVEL SECURITY;
 -- Create policies
 DROP POLICY IF EXISTS "Allow authenticated full access to categories" ON public.categories;
 CREATE POLICY "Allow authenticated full access to categories" ON public.categories FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow public read access to categories" ON public.categories;
+CREATE POLICY "Allow public read access to categories" ON public.categories FOR SELECT TO anon, authenticated USING (true);
 
 DROP POLICY IF EXISTS "Allow authenticated full access to brands" ON public.brands;
 CREATE POLICY "Allow authenticated full access to brands" ON public.brands FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow public read access to brands" ON public.brands;
+CREATE POLICY "Allow public read access to brands" ON public.brands FOR SELECT TO anon, authenticated USING (true);
 
 -- Create profiles table
 CREATE TABLE IF NOT EXISTS public.profiles (
@@ -48,7 +52,20 @@ CREATE TABLE IF NOT EXISTS public.products (
   brand TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'draft',
   is_featured BOOLEAN NOT NULL DEFAULT false,
+  isFlashSale BOOLEAN NOT NULL DEFAULT false,
   image_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Create hero_banners table
+CREATE TABLE IF NOT EXISTS public.hero_banners (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  subtitle TEXT NOT NULL,
+  button_text TEXT NOT NULL DEFAULT 'Shop Now',
+  button_link TEXT NOT NULL DEFAULT '/products',
+  image_url TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'Active',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -96,6 +113,7 @@ ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_tracking_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.hero_banners ENABLE ROW LEVEL SECURITY;
 
 -- Create basic policies (Allow authenticated users full access for the admin dashboard)
 CREATE POLICY "Allow authenticated full access to profiles" ON public.profiles FOR ALL TO authenticated USING (true);
@@ -104,6 +122,12 @@ CREATE POLICY "Allow authenticated full access to orders" ON public.orders FOR A
 CREATE POLICY "Allow authenticated full access to order_items" ON public.order_items FOR ALL TO authenticated USING (true);
 CREATE POLICY "Allow authenticated full access to order_tracking_history" ON public.order_tracking_history FOR ALL TO authenticated USING (true);
 CREATE POLICY "Allow authenticated full access to settings" ON public.settings FOR ALL TO authenticated USING (true);
+CREATE POLICY "Allow authenticated full access to hero_banners" ON public.hero_banners FOR ALL TO authenticated USING (true);
+
+-- Public Read Policies
+CREATE POLICY "Allow public read access to products" ON public.products FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Allow public read access to hero_banners" ON public.hero_banners FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Allow public read access to settings" ON public.settings FOR SELECT TO anon, authenticated USING (true);
 
 -- Create a trigger to automatically create a user profile when a new user signs up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -124,3 +148,4 @@ CREATE TRIGGER on_auth_user_created
 ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.categories;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.brands;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.hero_banners;

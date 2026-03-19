@@ -51,15 +51,14 @@ export default function HomeClient({
     ? heroBanners.filter(b => b.status === 'Active')
     : settings['hero_image'] ? [{
         id: 'default',
-        title: settings['hero_title'] || 'Everything You Need.',
-        subtitle: settings['hero_subtitle'] || 'Curated products for the modern lifestyle.',
+        title: settings['hero_title'] || '',
+        subtitle: settings['hero_subtitle'] || '',
         button_text: settings['hero_button_text'] || 'Shop Now',
         button_link: settings['hero_button_link'] || '#products',
         image_url: settings['hero_image'],
         status: 'Active' as const
       }] : [];
 
-  const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 59, seconds: 59 });
   const [currentBanner, setCurrentBanner] = useState(0);
 
   useEffect(() => {
@@ -69,18 +68,6 @@ export default function HomeClient({
     }, 5000);
     return () => clearInterval(bannerTimer);
   }, [activeBanners.length]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        if (prev.minutes > 0) return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        if (prev.hours > 0) return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        return prev;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   return (
     <div className="flex-1">
@@ -222,27 +209,6 @@ export default function HomeClient({
                   <p className="text-white/70 font-medium">Limited time offer, grab yours now!</p>
                 </div>
               </div>
-              
-              <div className="relative z-10 flex gap-4">
-                <div className="text-center">
-                  <div className="bg-white/10 backdrop-blur-md rounded-2xl w-20 py-4 text-3xl font-bold mb-1 border border-white/10">
-                    {String(timeLeft.hours).padStart(2, '0')}
-                  </div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-white/50">Hours</span>
-                </div>
-                <div className="text-center">
-                  <div className="bg-white/10 backdrop-blur-md rounded-2xl w-20 py-4 text-3xl font-bold mb-1 border border-white/10">
-                    {String(timeLeft.minutes).padStart(2, '0')}
-                  </div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-white/50">Mins</span>
-                </div>
-                <div className="text-center">
-                  <div className="bg-white/10 backdrop-blur-md rounded-2xl w-20 py-4 text-3xl font-bold mb-1 border border-white/10">
-                    {String(timeLeft.seconds).padStart(2, '0')}
-                  </div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-white/50">Secs</span>
-                </div>
-              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -275,30 +241,6 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* Newsletter Section */}
-      <section className="py-20 bg-[#0B1120] relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full opacity-10">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#8B183A] rounded-full blur-[120px]" />
-        </div>
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-4xl font-bold text-white mb-6 tracking-tight">Stay in the Loop</h2>
-            <p className="text-gray-400 text-lg mb-10">
-              Subscribe to our newsletter and be the first to know about new arrivals, exclusive offers, and tech trends.
-            </p>
-            <form className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto" onSubmit={(e) => e.preventDefault()}>
-              <input 
-                type="email" 
-                placeholder="Enter your email address" 
-                className="flex-1 bg-white/5 border border-white/10 rounded-full px-6 py-4 text-white focus:outline-none focus:border-[#8B183A] transition-colors"
-              />
-              <button className="bg-[#8B183A] text-white px-10 py-4 rounded-full font-bold hover:bg-[#721430] transition-all shadow-lg hover:scale-105">
-                Subscribe
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

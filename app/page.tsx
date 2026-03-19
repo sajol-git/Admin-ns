@@ -42,13 +42,6 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Top Announcement Bar */}
-      {topBannerText && (
-        <div className="bg-[#8B183A] text-white text-center py-2 px-4 text-[10px] font-bold tracking-[0.2em] uppercase">
-          {topBannerText}
-        </div>
-      )}
-
       <Header />
 
       <main className="flex-1">

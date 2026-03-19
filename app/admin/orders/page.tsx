@@ -4,10 +4,18 @@ import OrdersClient from './OrdersClient';
 export default async function OrdersPage() {
   const supabase = await createClient();
   let orders: any[] = [];
+  let products: any[] = [];
+  let profiles: any[] = [];
   
   try {
-    const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-    orders = data || [];
+    const [ordersRes, productsRes, profilesRes] = await Promise.all([
+      supabase.from('orders').select('*').order('created_at', { ascending: false }),
+      supabase.from('products').select('*').order('name', { ascending: true }),
+      supabase.from('profiles').select('*').order('name', { ascending: true })
+    ]);
+    orders = ordersRes.data || [];
+    products = productsRes.data || [];
+    profiles = profilesRes.data || [];
   } catch (error) {
     console.error('Supabase fetch error:', error);
   }
@@ -21,7 +29,7 @@ export default async function OrdersPage() {
         </div>
       </div>
 
-      <OrdersClient initialOrders={orders} />
+      <OrdersClient initialOrders={orders} products={products} profiles={profiles} />
     </div>
   );
 }

@@ -2,17 +2,32 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Order, OrderStatus } from '@/types';
-import { Search, FileText, MessageSquare, Clock, ChevronRight, ShoppingCart } from 'lucide-react';
+import { Order, OrderStatus, Product, User } from '@/types';
+import { Search, FileText, MessageSquare, Clock, ChevronRight, ShoppingCart, Plus, X, Loader2 } from 'lucide-react';
+import { createOrderWithCustomer } from '@/app/actions/admin';
 
 const STATUSES: OrderStatus[] = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
-export default function OrdersClient({ initialOrders }: { initialOrders: Order[] }) {
+export default function OrdersClient({ initialOrders, products, profiles }: { initialOrders: Order[], products: Product[], profiles: User[] }) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [trackingHistory, setTrackingHistory] = useState<any[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
+  
+  // Create Order Modal State
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [newOrderCustomerName, setNewOrderCustomerName] = useState('');
+  const [newOrderCustomerPhone, setNewOrderCustomerPhone] = useState('');
+  const [newOrderCustomerAddress, setNewOrderCustomerAddress] = useState('');
+  const [newOrderCustomerEmail, setNewOrderCustomerEmail] = useState('');
+  const [createNewProfile, setCreateNewProfile] = useState(false);
+  const [selectedCustomerProfile, setSelectedCustomerProfile] = useState<string>('');
+  
+  const [orderItems, setOrderItems] = useState<{product: Product, quantity: number}[]>([]);
+  const [productSearch, setProductSearch] = useState('');
+
   const supabase = createClient();
 
   useEffect(() => {
@@ -96,6 +111,89 @@ export default function OrdersClient({ initialOrders }: { initialOrders: Order[]
     o.customer_name.toLowerCase().includes(search.toLowerCase())
   );
 
+  const filteredProducts = products?.filter(p => 
+    p.name.toLowerCase().includes(productSearch.toLowerCase())
+  ) || [];
+
+  const handleAddProduct = (product: Product) => {
+    const existing = orderItems.find(item => item.product.id === product.id);
+    if (existing) {
+      setOrderItems(orderItems.map(item => 
+        item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+      ));
+    } else {
+      setOrderItems([...orderItems, { product, quantity: 1 }]);
+    }
+  };
+
+  const handleRemoveProduct = (productId: string) => {
+    setOrderItems(orderItems.filter(item => item.product.id !== productId));
+  };
+
+  const handleUpdateQuantity = (productId: string, quantity: number) => {
+    if (quantity < 1) return;
+    setOrderItems(orderItems.map(item => 
+      item.product.id === productId ? { ...item, quantity } : item
+    ));
+  };
+
+  const handleCustomerSelect = (profileId: string) => {
+    setSelectedCustomerProfile(profileId);
+    if (profileId) {
+      const profile = profiles.find(p => p.id === profileId);
+      if (profile) {
+        setNewOrderCustomerName(profile.name || '');
+        setNewOrderCustomerPhone(profile.phone || '');
+        setCreateNewProfile(false);
+      }
+    } else {
+      setNewOrderCustomerName('');
+      setNewOrderCustomerPhone('');
+    }
+  };
+
+  const handleCreateOrder = async () => {
+    if (!newOrderCustomerName || !newOrderCustomerPhone || !newOrderCustomerAddress || orderItems.length === 0) {
+      alert('Please fill in all customer details and add at least one product.');
+      return;
+    }
+
+    setIsSubmittingOrder(true);
+    
+    const total = orderItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    
+    const result = await createOrderWithCustomer({
+      customerName: newOrderCustomerName,
+      customerPhone: newOrderCustomerPhone,
+      customerAddress: newOrderCustomerAddress,
+      customerEmail: newOrderCustomerEmail,
+      createNewProfile,
+      items: orderItems.map(item => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+        price: item.product.price
+      })),
+      total
+    });
+
+    setIsSubmittingOrder(false);
+
+    if (result.error) {
+      alert(result.error);
+    } else {
+      setIsCreatingOrder(false);
+      // Reset form
+      setNewOrderCustomerName('');
+      setNewOrderCustomerPhone('');
+      setNewOrderCustomerAddress('');
+      setNewOrderCustomerEmail('');
+      setCreateNewProfile(false);
+      setSelectedCustomerProfile('');
+      setOrderItems([]);
+      setProductSearch('');
+    }
+  };
+
   const generateInvoice = (order: Order) => {
     // In a real app, this would generate a PDF or open a printable view
     const printWindow = window.open('', '_blank');
@@ -135,7 +233,14 @@ export default function OrdersClient({ initialOrders }: { initialOrders: Order[]
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-12rem)]">
       {/* Order List */}
       <div className="lg:col-span-1 border border-line bg-bg shadow-[4px_4px_0px_0px_rgba(20,20,20,1)] flex flex-col h-full">
-        <div className="p-4 border-b border-line">
+        <div className="p-4 border-b border-line flex flex-col gap-4">
+          <button 
+            onClick={() => setIsCreatingOrder(true)}
+            className="flex items-center justify-center gap-2 bg-ink text-bg px-4 py-2 font-mono text-sm uppercase tracking-wider hover:bg-opacity-90 transition-colors w-full"
+          >
+            <Plus className="h-4 w-4" />
+            Create Order
+          </button>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50" />
             <input
@@ -267,6 +372,208 @@ export default function OrdersClient({ initialOrders }: { initialOrders: Order[]
           </div>
         )}
       </div>
+
+      {/* Create Order Modal */}
+      {isCreatingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] flex flex-col border border-line bg-bg shadow-[8px_8px_0px_0px_rgba(20,20,20,1)]">
+            <div className="p-6 border-b border-line flex justify-between items-center shrink-0">
+              <h2 className="text-2xl font-mono font-bold tracking-tighter">CREATE_NEW_ORDER</h2>
+              <button onClick={() => setIsCreatingOrder(false)} className="p-2 hover:bg-line/10 transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Customer Details Section */}
+              <div className="space-y-6">
+                <h3 className="col-header border-b border-line pb-2">1. Customer Details</h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block font-mono text-xs opacity-70 mb-1">Select Existing Customer (Optional)</label>
+                    <select 
+                      value={selectedCustomerProfile}
+                      onChange={(e) => handleCustomerSelect(e.target.value)}
+                      className="w-full border border-line bg-transparent p-2 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-ink"
+                    >
+                      <option value="">-- Select Customer --</option>
+                      {profiles?.map(p => (
+                        <option key={p.id} value={p.id}>{p.name} ({p.phone || 'No phone'})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-mono text-xs opacity-70 mb-1">Name *</label>
+                      <input 
+                        type="text" 
+                        value={newOrderCustomerName}
+                        onChange={(e) => setNewOrderCustomerName(e.target.value)}
+                        className="w-full border border-line bg-transparent p-2 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-ink"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-mono text-xs opacity-70 mb-1">Phone *</label>
+                      <input 
+                        type="text" 
+                        value={newOrderCustomerPhone}
+                        onChange={(e) => setNewOrderCustomerPhone(e.target.value)}
+                        className="w-full border border-line bg-transparent p-2 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-ink"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-mono text-xs opacity-70 mb-1">Delivery Address *</label>
+                    <textarea 
+                      value={newOrderCustomerAddress}
+                      onChange={(e) => setNewOrderCustomerAddress(e.target.value)}
+                      className="w-full border border-line bg-transparent p-2 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-ink min-h-[80px]"
+                      required
+                    />
+                  </div>
+
+                  {!selectedCustomerProfile && (
+                    <div className="p-4 border border-line bg-line/5 space-y-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={createNewProfile}
+                          onChange={(e) => setCreateNewProfile(e.target.checked)}
+                          className="accent-ink"
+                        />
+                        <span className="font-mono text-sm font-bold">Create User Profile for Customer</span>
+                      </label>
+                      
+                      {createNewProfile && (
+                        <div>
+                          <label className="block font-mono text-xs opacity-70 mb-1">Email Address (Required for profile)</label>
+                          <input 
+                            type="email" 
+                            value={newOrderCustomerEmail}
+                            onChange={(e) => setNewOrderCustomerEmail(e.target.value)}
+                            className="w-full border border-line bg-transparent p-2 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-ink bg-bg"
+                            placeholder="customer@example.com"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Product Selection Section */}
+              <div className="space-y-6 flex flex-col h-full">
+                <h3 className="col-header border-b border-line pb-2">2. Order Items</h3>
+                
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50" />
+                  <input
+                    type="text"
+                    placeholder="Search products to add..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="w-full border border-line bg-transparent pl-10 pr-4 py-2 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-ink"
+                  />
+                </div>
+
+                {/* Product Search Results */}
+                {productSearch && (
+                  <div className="border border-line max-h-40 overflow-y-auto bg-bg shadow-sm">
+                    {filteredProducts.length === 0 ? (
+                      <div className="p-2 text-center font-mono text-xs opacity-50">No products found</div>
+                    ) : (
+                      filteredProducts.map(product => (
+                        <div key={product.id} className="flex items-center justify-between p-2 border-b border-line last:border-0 hover:bg-line/5">
+                          <div className="truncate pr-2">
+                            <p className="font-mono text-sm truncate">{product.name}</p>
+                            <p className="font-mono text-xs opacity-70">${product.price.toFixed(2)}</p>
+                          </div>
+                          <button 
+                            onClick={() => handleAddProduct(product)}
+                            className="px-2 py-1 bg-ink text-bg font-mono text-xs hover:bg-opacity-90 shrink-0"
+                          >
+                            Add
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {/* Selected Items */}
+                <div className="flex-1 overflow-y-auto border border-line bg-line/5 p-4 min-h-[150px]">
+                  {orderItems.length === 0 ? (
+                    <div className="h-full flex items-center justify-center font-mono text-sm opacity-50">
+                      No items added yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {orderItems.map(item => (
+                        <div key={item.product.id} className="flex items-center justify-between bg-bg border border-line p-2">
+                          <div className="flex-1 truncate pr-2">
+                            <p className="font-mono text-sm truncate">{item.product.name}</p>
+                            <p className="font-mono text-xs opacity-70">${item.product.price.toFixed(2)} each</p>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <div className="flex items-center border border-line">
+                              <button 
+                                onClick={() => handleUpdateQuantity(item.product.id, item.quantity - 1)}
+                                className="px-2 py-1 hover:bg-line/10"
+                              >-</button>
+                              <span className="font-mono text-sm px-2 w-8 text-center">{item.quantity}</span>
+                              <button 
+                                onClick={() => handleUpdateQuantity(item.product.id, item.quantity + 1)}
+                                className="px-2 py-1 hover:bg-line/10"
+                              >+</button>
+                            </div>
+                            <button 
+                              onClick={() => handleRemoveProduct(item.product.id)}
+                              className="p-1 text-red-500 hover:bg-red-50"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Total */}
+                <div className="pt-4 border-t border-line flex justify-between items-center">
+                  <span className="font-mono font-bold">Total Amount:</span>
+                  <span className="font-mono text-xl font-bold">
+                    ${orderItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-line flex justify-end gap-4 shrink-0 bg-line/5">
+              <button 
+                onClick={() => setIsCreatingOrder(false)}
+                className="px-6 py-2 font-mono text-sm uppercase tracking-wider border border-line hover:bg-line/10 transition-colors"
+                disabled={isSubmittingOrder}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleCreateOrder}
+                disabled={isSubmittingOrder || orderItems.length === 0 || !newOrderCustomerName || !newOrderCustomerPhone || !newOrderCustomerAddress}
+                className="flex items-center gap-2 bg-ink text-bg px-8 py-2 font-mono text-sm uppercase tracking-wider hover:bg-opacity-90 transition-colors disabled:opacity-50"
+              >
+                {isSubmittingOrder ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
+                Place Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

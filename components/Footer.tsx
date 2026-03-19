@@ -36,16 +36,6 @@ export function Footer({ settings }: FooterProps) {
               </div>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed">{footerDescription}</p>
-            <div className="flex gap-2">
-              <input 
-                type="email" 
-                placeholder="Your email address" 
-                className="flex-1 bg-white/5 border border-white/10 rounded-3xl px-4 py-3 text-sm focus:outline-none focus:border-[#8B183A] transition-colors"
-              />
-              <button className="bg-[#8B183A] text-white px-6 py-3 rounded-full font-bold text-sm hover:bg-[#721430] transition-colors">
-                Join
-              </button>
-            </div>
           </div>
 
           {/* Top Gadgets */}
@@ -96,14 +86,6 @@ export function Footer({ settings }: FooterProps) {
               </Link>
               <Link href={socialYoutube} className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#8B183A] transition-colors">
                 <Youtube className="w-5 h-5" strokeWidth={2} />
-              </Link>
-            </div>
-            <div className="mt-6 flex flex-wrap gap-4">
-              <Link href="#" className="block hover:scale-105 transition-transform">
-                <Image src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" width={120} height={40} className="h-10 w-auto" />
-              </Link>
-              <Link href="#" className="block hover:scale-105 transition-transform">
-                <Image src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" width={120} height={40} className="h-10 w-auto" />
               </Link>
             </div>
           </div>

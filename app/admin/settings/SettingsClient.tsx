@@ -107,38 +107,6 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
         </div>
       </div>
 
-      {/* Banner Management */}
-      <div className="border border-line bg-bg shadow-[4px_4px_0px_0px_rgba(20,20,20,1)] p-6">
-        <h2 className="text-xl font-mono font-bold tracking-tighter mb-6 flex items-center gap-2">
-          <Type className="h-5 w-5" />
-          PROMO_BANNERS
-        </h2>
-        
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="col-header block">Top Announcement Bar</label>
-            <input
-              type="text"
-              value={settings['hero_banner_text'] || ''}
-              onChange={(e) => handleChange('hero_banner_text', e.target.value)}
-              className="w-full border border-line bg-transparent p-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ink"
-              placeholder="Welcome to NeedieShop!"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label className="col-header block">Offer Banner Text</label>
-            <input
-              type="text"
-              value={settings['offer_banner_text'] || ''}
-              onChange={(e) => handleChange('offer_banner_text', e.target.value)}
-              className="w-full border border-line bg-transparent p-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ink"
-              placeholder="Free shipping on orders over $50!"
-            />
-          </div>
-        </div>
-      </div>
-
       {/* General Settings */}
       <div className="border border-line bg-bg shadow-[4px_4px_0px_0px_rgba(20,20,20,1)] p-6">
         <h2 className="text-xl font-mono font-bold tracking-tighter mb-6 flex items-center gap-2">
