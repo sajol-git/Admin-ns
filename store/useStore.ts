@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, Product, Category } from '@/types';
+import { User, Product, Category, Brand } from '@/types';
 
 interface StoreState {
   user: User | null;
