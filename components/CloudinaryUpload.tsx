@@ -49,7 +49,7 @@ export default function CloudinaryUpload({
             options={{
               maxFiles: 1,
               folder: 'needieshop',
-              sources: ['local', 'url', 'camera', 'cloudinary'],
+              sources: ['local'],
               clientAllowedFormats: ['png', 'jpeg', 'jpg', 'webp'],
               styles: {
                 palette: {
