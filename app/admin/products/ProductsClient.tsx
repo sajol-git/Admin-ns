@@ -138,9 +138,9 @@ export default function ProductsClient({
         if (newProduct) setProducts([newProduct, ...products]);
       }
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving product:', error);
-      alert('Failed to save product.');
+      alert(`Failed to save product: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSaving(false);
     }
