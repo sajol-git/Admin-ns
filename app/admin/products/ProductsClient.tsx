@@ -31,6 +31,7 @@ const productSchema = z.object({
   brand: z.string().min(1, 'Brand is required'),
   status: z.enum(['published', 'draft']),
   is_featured: z.boolean(),
+  image_url: z.string().optional().nullable(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -102,6 +103,7 @@ export default function ProductsClient({
         brand: product.brand,
         status: product.status,
         is_featured: product.is_featured,
+        image_url: product.image_url,
       });
     } else {
       setEditingProduct(null);
@@ -115,6 +117,7 @@ export default function ProductsClient({
         brand: brands[0]?.name || '',
         status: 'draft',
         is_featured: false,
+        image_url: '',
       });
     }
     setIsModalOpen(true);
@@ -533,7 +536,7 @@ export default function ProductsClient({
                     <div className="aspect-square border-4 border-ink bg-line/5 overflow-hidden shadow-[8px_8px_0px_0px_rgba(20,20,20,1)]">
                       {watch('image_url') ? (
                         <img 
-                          src={watch('image_url')} 
+                          src={watch('image_url') || ''} 
                           alt="Preview" 
                           className="w-full h-full object-cover"
                         />

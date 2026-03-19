@@ -13,7 +13,7 @@ export interface Product {
   brand: string;
   status: ProductStatus;
   is_featured: boolean;
-  image_url?: string;
+  image_url?: string | null;
   created_at?: string;
 }
 

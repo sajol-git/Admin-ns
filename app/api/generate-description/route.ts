@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     Category: ${category || 'General'}
     Brand: ${brand || 'Unknown'}
     
-    The description should be engaging, highlight key benefits, and be formatted in plain text (no markdown, just paragraphs). Keep it under 150 words.`;
+    The description should be engaging, highlight key benefits, and be formatted in HTML (use <p>, <ul>, <li>, <strong> tags). Keep it under 150 words.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
