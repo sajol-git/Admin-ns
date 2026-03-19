@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, Edit2, X, Check, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Check, Loader2, Image as ImageIcon, Search, LayoutGrid } from 'lucide-react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
 import { createClient } from '@/utils/supabase/client';
@@ -11,13 +11,21 @@ import CloudinaryUpload from '@/components/CloudinaryUpload';
 
 export default function CategoriesClient({ initialCategories }: { initialCategories: Category[] }) {
   const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({ name: '', slug: '', image_url: '' });
   
   const supabase = createClient();
   const router = useRouter();
+
+  const filteredCategories = categories.filter(c => 
+    c.name.toLowerCase().includes(search.toLowerCase()) || 
+    c.slug.toLowerCase().includes(search.toLowerCase())
+  );
 
   const handleOpenModal = (category?: Category) => {
     if (category) {
@@ -67,7 +75,6 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
         if (error) throw error;
       }
 
-      // Refresh data
       const { data, error: fetchError } = await supabase
         .from('categories')
         .select('*')
@@ -79,110 +86,175 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
       router.refresh();
     } catch (error: any) {
       console.error('Error saving category:', error);
-      alert(`Error saving category: ${error.message || 'Please try again.'}`);
+      setError(`Error saving category: ${error.message || 'Please try again.'}`);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
-    
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return;
     setIsLoading(true);
     try {
       const { error } = await supabase
         .from('categories')
         .delete()
-        .eq('id', id);
+        .eq('id', deleteConfirmId);
       if (error) throw error;
 
-      setCategories(categories.filter(c => c.id !== id));
+      setCategories(categories.filter(c => c.id !== deleteConfirmId));
+      setDeleteConfirmId(null);
       router.refresh();
     } catch (error) {
       console.error('Error deleting category:', error);
-      alert('Error deleting category. It might be in use.');
+      setError('Error deleting category. It might be in use.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-8 pb-10"
+    >
+      {/* Header Section */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
         <div>
-          <h1 className="font-mono text-3xl font-bold uppercase tracking-tighter">Categories</h1>
-          <p className="font-mono text-sm text-ink/60">Manage product categories</p>
+          <div className="flex items-center gap-2 text-indigo-600 mb-1">
+            <LayoutGrid className="h-5 w-5" />
+            <span className="text-xs font-black uppercase tracking-[0.2em]">Category Hub</span>
+          </div>
+          <h1 className="text-4xl font-black tracking-tight text-gray-900">Categories</h1>
+          <p className="text-sm text-gray-500 font-medium mt-1">Organize and manage your product categories.</p>
         </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 bg-ink px-4 py-2 font-mono text-sm font-bold uppercase tracking-wider text-bg hover:bg-ink/90 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Add Category
-        </button>
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+          <div className="relative flex-1 sm:w-80 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-indigo-600 transition-colors" />
+            <input
+              type="text"
+              placeholder="Search categories..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-2xl border border-gray-200 bg-gray-50/50 pl-11 pr-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium"
+            />
+          </div>
+          <button
+            onClick={() => handleOpenModal()}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+          >
+            <Plus className="h-5 w-5" />
+            Add Category
+          </button>
+        </div>
       </div>
 
-      <div className="border border-line bg-bg">
+      {/* Categories Table */}
+      <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left font-mono text-sm">
+          <table className="w-full text-left text-sm border-collapse">
             <thead>
-              <tr className="border-b border-line bg-line/5 uppercase tracking-wider">
-                <th className="p-4 font-bold">Logo</th>
-                <th className="p-4 font-bold">Name</th>
-                <th className="p-4 font-bold">Slug</th>
-                <th className="p-4 font-bold">Created At</th>
-                <th className="p-4 text-right font-bold">Actions</th>
+              <tr className="border-b border-gray-50 bg-gray-50/50 text-gray-400 uppercase tracking-[0.2em] text-[10px] font-black">
+                <th className="p-8">Image</th>
+                <th className="p-8">Category Details</th>
+                <th className="p-8">Slug</th>
+                <th className="p-8">Created At</th>
+                <th className="p-8 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {categories.map((category) => (
-                <tr key={category.id} className="border-b border-line hover:bg-line/5 transition-colors">
-                  <td className="p-4">
-                    {category.image_url ? (
-                      <div className="relative h-10 w-10 border border-line bg-white overflow-hidden">
-                        <Image 
-                          src={category.image_url} 
-                          alt={category.name} 
-                          fill
-                          className="object-contain"
-                          referrerPolicy="no-referrer"
-                        />
+            <tbody className="divide-y divide-gray-50">
+              <AnimatePresence mode="popLayout">
+                {filteredCategories.map((category) => (
+                  <motion.tr 
+                    key={category.id}
+                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="hover:bg-indigo-50/30 transition-all group"
+                  >
+                    <td className="p-8">
+                      {category.image_url ? (
+                        <div className="relative h-14 w-14 rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm group-hover:shadow-md transition-all group-hover:scale-110 group-hover:rotate-2">
+                          <Image 
+                            src={category.image_url} 
+                            alt={category.name} 
+                            fill
+                            className="object-contain p-2"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-gray-300">
+                          <ImageIcon className="h-6 w-6" />
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-8">
+                      <div className="flex flex-col">
+                        <span className="font-black text-gray-900 text-lg group-hover:text-indigo-600 transition-colors">
+                          {category.name}
+                        </span>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Primary Category</span>
                       </div>
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center border border-line bg-line/5">
-                        <ImageIcon className="h-4 w-4 opacity-20" />
+                    </td>
+                    <td className="p-8">
+                      <code className="px-3 py-1.5 rounded-xl bg-gray-100 text-gray-600 text-xs font-mono font-bold">
+                        {category.slug}
+                      </code>
+                    </td>
+                    <td className="p-8 text-gray-500 font-bold text-xs uppercase tracking-wider">
+                      {category.created_at ? new Date(category.created_at).toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      }) : 'N/A'}
+                    </td>
+                    <td className="p-8 text-right">
+                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                        <button
+                          onClick={() => handleOpenModal(category)}
+                          className="p-3 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-2xl transition-all active:scale-90"
+                          title="Edit"
+                        >
+                          <Edit2 className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(category.id)}
+                          className="p-3 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all active:scale-90"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
                       </div>
-                    )}
-                  </td>
-                  <td className="p-4 font-bold">{category.name}</td>
-                  <td className="p-4 text-ink/60">{category.slug}</td>
-                  <td className="p-4 text-ink/60">
-                    {category.created_at ? new Date(category.created_at).toLocaleDateString() : 'N/A'}
-                  </td>
-                  <td className="p-4 text-right">
-                    <div className="flex justify-end gap-2">
+                    </td>
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
+              {filteredCategories.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-24 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-6">
+                      <div className="h-24 w-24 rounded-[2rem] bg-gray-50 flex items-center justify-center text-gray-200 border border-gray-100 shadow-inner">
+                        <ImageIcon className="h-10 w-10" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xl font-black text-gray-900 uppercase tracking-widest">No categories found</p>
+                        <p className="text-sm text-gray-500 font-medium">Try adjusting your search or add a new category.</p>
+                      </div>
                       <button
-                        onClick={() => handleOpenModal(category)}
-                        className="p-2 hover:bg-line/10 transition-colors"
-                        title="Edit"
+                        onClick={() => handleOpenModal()}
+                        className="flex items-center gap-2 bg-indigo-600 px-8 py-3.5 text-sm font-black text-white hover:bg-indigo-700 transition-all rounded-2xl shadow-xl shadow-indigo-600/20 active:scale-95"
                       >
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(category.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
+                        <Plus className="h-5 w-5" />
+                        Create Your First Category
                       </button>
                     </div>
-                  </td>
-                </tr>
-              ))}
-              {categories.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-ink/40">
-                    No categories found. Create your first one.
                   </td>
                 </tr>
               )}
@@ -200,71 +272,94 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={handleCloseModal}
-              className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-md"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md border border-line bg-bg p-6 shadow-2xl"
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-lg rounded-[2.5rem] bg-white p-10 shadow-2xl border border-gray-100"
             >
-              <div className="mb-6 flex items-center justify-between">
-                <h2 className="font-mono text-xl font-bold uppercase tracking-tight">
-                  {editingCategory ? 'Edit Category' : 'New Category'}
-                </h2>
-                <button onClick={handleCloseModal} className="p-1 hover:bg-line/10">
-                  <X className="h-5 w-5" />
+              <div className="mb-10 flex items-center justify-between">
+                <div>
+                  <h2 className="text-3xl font-black text-gray-900 tracking-tight">
+                    {editingCategory ? 'Edit Category' : 'New Category'}
+                  </h2>
+                  <p className="text-sm text-gray-500 font-medium mt-1">
+                    {editingCategory ? 'Update category details and logo.' : 'Create a new category for your products.'}
+                  </p>
+                </div>
+                <button 
+                  onClick={handleCloseModal} 
+                  className="rounded-2xl p-3 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all active:scale-90"
+                >
+                  <X className="h-6 w-6" />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-ink/60">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={handleNameChange}
-                    className="w-full border border-line bg-bg p-2 font-mono text-sm focus:border-ink focus:outline-none"
-                    placeholder="e.g. Electronics"
-                  />
+              <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">
+                      Category Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={handleNameChange}
+                      className="w-full rounded-2xl border border-gray-200 bg-gray-50/30 px-5 py-4 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold"
+                      placeholder="e.g. Electronics"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">
+                      URL Slug
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.slug}
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                      className="w-full rounded-2xl border border-gray-200 bg-gray-100/50 px-5 py-4 text-sm text-gray-500 focus:outline-none transition-all font-mono font-bold"
+                      placeholder="e.g. electronics"
+                      readOnly
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">
+                      Category Logo
+                    </label>
+                    <div className="rounded-[2rem] border-2 border-dashed border-gray-100 bg-gray-50/30 p-2">
+                      <CloudinaryUpload
+                        label=""
+                        value={formData.image_url}
+                        onChange={(url) => setFormData({ ...formData, image_url: url })}
+                        onRemove={() => setFormData({ ...formData, image_url: '' })}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-ink/60">
-                    Slug
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="w-full border border-line bg-bg p-2 font-mono text-sm focus:border-ink focus:outline-none"
-                    placeholder="e.g. electronics"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <CloudinaryUpload
-                    label="Category Logo"
-                    value={formData.image_url}
-                    onChange={(url) => setFormData({ ...formData, image_url: url })}
-                    onRemove={() => setFormData({ ...formData, image_url: '' })}
-                  />
-                </div>
-
-                <div className="pt-4">
+                <div className="pt-6 flex gap-4 border-t border-gray-50">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="flex-1 rounded-2xl bg-gray-50 px-6 py-4 text-sm font-bold text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-all active:scale-[0.98]"
+                  >
+                    Cancel
+                  </button>
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="flex w-full items-center justify-center gap-2 bg-ink p-3 font-mono text-sm font-bold uppercase tracking-widest text-bg hover:bg-ink/90 disabled:opacity-50"
+                    className="flex-[2] flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-4 text-sm font-black text-white hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-xl shadow-indigo-600/20 active:scale-[0.98]"
                   >
                     {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
-                      <Check className="h-4 w-4" />
+                      <Check className="h-5 w-5" />
                     )}
                     {editingCategory ? 'Update Category' : 'Create Category'}
                   </button>
@@ -274,6 +369,76 @@ export default function CategoriesClient({ initialCategories }: { initialCategor
           </div>
         )}
       </AnimatePresence>
-    </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDeleteConfirmId(null)}
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl p-8 text-center"
+            >
+              <div className="mx-auto w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mb-6">
+                <Trash2 className="h-10 w-10 text-red-500" />
+              </div>
+              <h3 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">Delete Category?</h3>
+              <p className="text-gray-500 text-sm font-medium mb-8 leading-relaxed">
+                This action cannot be undone. If this category is linked to products, deletion might fail.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="flex-1 px-4 py-4 text-sm font-bold text-gray-500 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 px-4 py-4 text-sm font-black text-white bg-red-600 rounded-2xl hover:bg-red-700 transition-all shadow-lg shadow-red-200 active:scale-95"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Error Toast */}
+      <AnimatePresence>
+        {error && (
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] w-full max-w-md px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="bg-gray-900 text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4 border border-white/10 backdrop-blur-xl"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-500/20 rounded-xl">
+                  <X className="h-5 w-5 text-red-400" />
+                </div>
+                <p className="text-sm font-bold">{error}</p>
+              </div>
+              <button 
+                onClick={() => setError(null)}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

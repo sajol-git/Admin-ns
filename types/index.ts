@@ -25,6 +25,7 @@ export interface Order {
   customer_name: string;
   customer_phone: string;
   customer_address: string;
+  customer_email?: string;
   created_at?: string;
 }
 

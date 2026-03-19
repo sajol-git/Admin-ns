@@ -4,7 +4,14 @@ import Link from 'next/link';
 import { Search, ShoppingCart, User, Menu } from 'lucide-react';
 import Image from 'next/image';
 
-export function Header() {
+interface HeaderProps {
+  settings?: Record<string, string>;
+}
+
+export function Header({ settings }: HeaderProps) {
+  const logo = settings?.['site_logo'];
+  const siteName = settings?.['site_name'] || 'NeedieShop';
+
   return (
     <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -16,15 +23,21 @@ export function Header() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <div className="relative h-8 w-32">
-              <Image 
-                src="https://res.cloudinary.com/byngla/image/upload/v1764928332/webstore/rezxlvheluvbsrbted8o.png"
-                alt="NeedieShop"
-                fill
-                className="object-contain"
-                referrerPolicy="no-referrer"
-              />
-            </div>
+            {logo ? (
+              <div className="relative h-8 w-32">
+                <Image 
+                  src={logo}
+                  alt={siteName}
+                  fill
+                  className="object-contain"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            ) : (
+              <span className="text-xl font-black tracking-tighter text-gray-900 uppercase italic">
+                {siteName}
+              </span>
+            )}
           </Link>
 
           {/* Navigation */}

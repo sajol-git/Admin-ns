@@ -40,8 +40,8 @@ export default async function CustomersPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-mono font-bold tracking-tighter mb-2">USER_MANAGEMENT</h1>
-          <p className="col-header">Customer profiles and role administration</p>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-1">Customers</h1>
+          <p className="text-sm text-gray-500">Customer profiles and role administration</p>
         </div>
       </div>
 

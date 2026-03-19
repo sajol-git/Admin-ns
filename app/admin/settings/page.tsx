@@ -22,8 +22,8 @@ export default async function SettingsPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-mono font-bold tracking-tighter mb-2">SITE_CONFIGURATION</h1>
-          <p className="col-header">Manage global settings and content</p>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-1">Settings</h1>
+          <p className="text-sm text-gray-500">Manage global settings and content</p>
         </div>
       </div>
 

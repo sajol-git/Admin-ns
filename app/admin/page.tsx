@@ -46,8 +46,8 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-mono font-bold tracking-tighter mb-2">SYSTEM_OVERVIEW</h1>
-        <p className="col-header">Real-time metrics and analytics</p>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-1">Dashboard Overview</h1>
+        <p className="text-sm text-gray-500">Real-time metrics and analytics</p>
       </div>
 
       <DashboardClient 

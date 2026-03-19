@@ -9,47 +9,32 @@ import { ProductCard } from '@/components/ProductCard';
 import { Product, Category } from '@/types';
 import { useStore } from '@/store/useStore';
 
-interface HeroBanner {
-  id: string;
-  title: string;
-  subtitle: string;
-  button_text: string;
-  button_link: string;
-  image_url: string;
-  status: 'Active' | 'Inactive';
-}
-
 interface HomeClientProps {
-  initialBanners: HeroBanner[];
   initialCategories: Category[];
   initialProducts: Product[];
   settings: Record<string, string>;
 }
 
 export default function HomeClient({ 
-  initialBanners, 
   initialCategories, 
   initialProducts,
   settings 
 }: HomeClientProps) {
-  const { setHeroBanners, setCategories, setProducts } = useStore();
+  const { setCategories, setProducts } = useStore();
   
   // Initialize store with server data
   useEffect(() => {
-    setHeroBanners(initialBanners);
     setCategories(initialCategories);
     setProducts(initialProducts);
-  }, [initialBanners, initialCategories, initialProducts, setHeroBanners, setCategories, setProducts]);
+  }, [initialCategories, initialProducts, setCategories, setProducts]);
 
-  const { heroBanners, categories, products } = useStore();
+  const { categories, products } = useStore();
   
   const featuredProducts = products.filter(p => p.is_featured && p.status === 'published');
   const flashSaleProducts = products.filter(p => p.isFlashSale && p.status === 'published');
   
-  // If no dynamic banners, use the single one from settings
-  const activeBanners = heroBanners.length > 0 
-    ? heroBanners.filter(b => b.status === 'Active')
-    : settings['hero_image'] ? [{
+  // Use the single banner from settings
+  const activeBanners = settings['hero_image'] ? [{
         id: 'default',
         title: settings['hero_title'] || '',
         subtitle: settings['hero_subtitle'] || '',

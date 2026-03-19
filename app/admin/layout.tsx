@@ -45,46 +45,48 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-bg text-ink">
+    <div className="flex h-screen overflow-hidden bg-gray-50 text-gray-900 font-sans">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-line bg-bg transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-gray-200 bg-white shadow-sm transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex h-full flex-col">
-          <div className="flex h-16 items-center justify-between border-b border-line px-4">
-            <span className="font-mono text-xl font-bold tracking-tighter">NEEDIE_ADMIN</span>
-            <button onClick={toggleSidebar} className="md:hidden">
+          <div className="flex h-16 items-center justify-between border-b border-gray-200 px-6">
+            <span className="text-xl font-bold tracking-tight text-indigo-600">Needie Admin</span>
+            <button onClick={toggleSidebar} className="md:hidden text-gray-500 hover:text-gray-900">
               <Menu className="h-6 w-6" />
             </button>
           </div>
           
-          <nav className="flex-1 space-y-1 p-4">
+          <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 font-mono text-sm uppercase tracking-wider transition-colors ${
-                    isActive ? 'bg-ink text-bg' : 'hover:bg-line/10'
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    isActive 
+                      ? 'bg-indigo-50 text-indigo-700' 
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                 >
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className={`h-5 w-5 ${isActive ? 'text-indigo-700' : 'text-gray-400'}`} />
                   {item.name}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="border-t border-line p-4">
+          <div className="border-t border-gray-200 p-4">
             <button
               onClick={handleLogout}
-              className="flex w-full items-center gap-3 px-3 py-2 font-mono text-sm uppercase tracking-wider hover:bg-line/10 transition-colors"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
             >
-              <LogOut className="h-4 w-4" />
-              Terminate Session
+              <LogOut className="h-5 w-5 text-gray-400" />
+              Sign Out
             </button>
           </div>
         </div>
@@ -92,11 +94,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 items-center justify-between border-b border-line px-4 md:hidden">
-          <button onClick={toggleSidebar}>
+        <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm md:hidden">
+          <button onClick={toggleSidebar} className="text-gray-500 hover:text-gray-900">
             <Menu className="h-6 w-6" />
           </button>
-          <span className="font-mono text-xl font-bold tracking-tighter">NEEDIE_ADMIN</span>
+          <span className="text-xl font-bold tracking-tight text-indigo-600">Needie Admin</span>
           <div className="w-6" /> {/* Spacer for centering */}
         </header>
 

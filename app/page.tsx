@@ -6,47 +6,28 @@ import { Footer } from '@/components/Footer';
 export default async function Home() {
   const supabase = await createClient();
 
-  // Fetch products
-  const { data: products } = await supabase
-    .from('products')
-    .select('*')
-    .eq('status', 'published')
-    .order('created_at', { ascending: false });
+  // Fetch all data in parallel
+  const [
+    { data: products },
+    { data: categories },
+    { data: settingsData }
+  ] = await Promise.all([
+    supabase.from('products').select('*').eq('status', 'published').order('created_at', { ascending: false }),
+    supabase.from('categories').select('*').order('created_at', { ascending: false }),
+    supabase.from('settings').select('*')
+  ]);
 
-  // Fetch categories
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  // Fetch banners (if table exists, otherwise empty)
-  let banners = [];
-  try {
-    const { data: bannersData } = await supabase
-      .from('hero_banners')
-      .select('*')
-      .eq('status', 'Active');
-    if (bannersData) banners = bannersData;
-  } catch (error) {
-    console.log('hero_banners table might not exist yet');
-  }
-
-  // Fetch settings
-  const { data: settingsData } = await supabase.from('settings').select('*');
   const settings = (settingsData || []).reduce((acc, curr) => {
     acc[curr.key] = curr.value;
     return acc;
   }, {} as Record<string, string>);
 
-  const topBannerText = settings['hero_banner_text'];
-
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <Header />
+      <Header settings={settings} />
 
       <main className="flex-1">
         <HomeClient 
-          initialBanners={banners}
           initialCategories={categories || []}
           initialProducts={products || []}
           settings={settings}

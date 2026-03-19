@@ -25,8 +25,8 @@ export default async function ProductsPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-mono font-bold tracking-tighter mb-2">CATALOG_MANAGEMENT</h1>
-          <p className="col-header">Inventory and product metadata control</p>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-1">Products</h1>
+          <p className="text-sm text-gray-500">Manage your product catalog and inventory</p>
         </div>
       </div>
 
